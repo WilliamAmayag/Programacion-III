@@ -21,15 +21,31 @@ class crud:
             return resultado
         except Exception as e:
             return str(e)
-
-    def insertar(self, codigo, nombre, telefono):
+    
+    def ejecutar_consulta(self, sql, val):
         try:
             cursor = self.conexion.cursor()
-            sql = "INSERT INTO alumnos (codigo, nombre, telefono) VALUES (%s, %s, %s)"
-            val = (codigo, nombre, telefono)
             cursor.execute(sql, val)
             self.conexion.commit()
-            return 'Registro insertado correctamente'
+            return "Registro procesado con exito"
+        except Exception as e:
+            return str(e)
+
+    def administrar_alumnos(self, contenido):
+        try:
+            if contenido["accion"]=="nuevo":
+                sql = "INSERT INTO alumnos (codigo, nombre, telefono) VALUES (%s, %s, %s)"
+                val = (contenido["codigo"], contenido["nombre"], contenido["telefono"])
+
+            elif contenido["accion"]=="modificar":
+                sql = "UPDATE alumnos SET codigo=%s, nombre=%s, telefono=%s WHERE idAlumno=%s"
+                val = (contenido["codigo"], contenido["nombre"], contenido["telefono"], contenido["idAlumno"])
+
+            elif contenido["accion"]=="eliminar":
+                sql = "DELETE FROM alumnos WHERE idAlumno=%s"
+                val = (contenido["idAlumno"],)
+
+            return self.ejecutar_consulta(sql, val)
         except Exception as e:
             return str(e)
 
@@ -53,7 +69,7 @@ class servidorBasico(SimpleHTTPRequestHandler):
             data = data.decode('utf-8')
             data = parse.unquote(data)
             data = json.loads(data)
-            resp = crud.insertar(data['codigo'], data['nombre'], data['telefono'])
+            resp = crud.administrar_alumnos(data)
             self.send_response(200)
             self.end_headers()
             self.wfile.write(json.dumps(dict(resp=resp)).encode('utf-8'))
