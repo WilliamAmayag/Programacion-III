@@ -98,29 +98,68 @@
                 .data("idalumno",0);
             $("#frmAlumnos input[type=text]").val("");
         }
-
-
         function eliminarAlumno(alumno){
             if( confirm(`Esta seguro de eliminar el alumno ${alumno.nombre}?`) ){
                 let accion = "eliminar",
                     idAlumno = alumno.idAlumno,
                     datos = {accion,idAlumno};
-                $.post("http://localhost:3000/insertar",JSON.stringify(datos),(resp, status)=>{
-                    $("#msgAlumnos").removeClass("d-none").text(resp.resp);
-
-                    $("#msgAlumnos")
-                        .removeClass("alert-danger")
-                        .addClass("alert-success");
-
-                    setTimeout(()=>{
-                        $("#msgAlumnos").addClass("d-none");
-                    },5000);
-                    limpiarDatosAlumno();
-                    consultarAlumnos();
-                }, "json");
+                crub(datos, "eliminar");
             }
         }
+        $(document).ready(e=>{
+            consultarAlumnos();
+            $("#txtBuscarAlumnos").keyup(function(e){
+                let valor = $(this).val(),
+                    $tblalumnos = $("#tblBuscarAlumnos > tbody > tr");                
+                console.log(valor, $tblalumnos);
+            });
+            $("#frmAlumnos")
+                .on('reset', e=>{
+                    limpiarDatosAlumno();
+                })
+                .submit(e=>{
+                e.preventDefault();
 
+                let accion = $("#frmAlumnos").data("accion"),
+                    idAlumno = $("#frmAlumnos").data("idalumno"),
+                    codigo = $("#txtCodigoAlumno").val(),
+                    nombre = $("#txtNombreAlumno").val(),
+                    telefono = $("#txtTelefonoAlumno").val(),
+                    datos = {accion, idAlumno, codigo, nombre, telefono};
+          crub(datos, "agregar");
+            });
+        });
+    function crub(datos, proceso){
+        var $url = "http://localhost:3000/insertar";
+            if (proceso = "eliminar"){
+                $.post($url,JSON.stringify(datos),(resp, status)=>{
+                mensajes(resp, proceso);
+                limpiarDatosAlumno();
+                consultarAlumnos(); },"json");
+            } 
+            if (proceso = "agregar"){
+                $.post($url,JSON.stringify(datos), (respuesta, status)=>{
+                mensajes(resp, proceso); }, "json");
+            }
+    }
+function mensajes(resp, proceso){
+    $("#msgAlumnos").removeClass("d-none").text(resp.resp);
+    if (proceso = "eliminar"){
+        $("#msgAlumnos").removeClass("alert-danger").addClass("alert-success");
+    }
+    if (proceso = "agregar"){
+        if( resp.resp.indexOf("exito") >=0 ){
+            limpiarDatosAlumno();
+            consultarAlumnos();
+            $("#msgAlumnos").removeClass("alert-danger").addClass("alert-success");
+        } else {
+            $("#msgAlumnos").removeClass("alert-success").addClass("alert-danger");
+        }
+    }
+setTimeout(()=>{
+    $("#msgAlumnos").addClass("d-none");
+},5000);
+}
 
         function consultarAlumnos(){
             $.get("http://localhost:3000/consultar",(respuesta, status)=>{
@@ -151,51 +190,6 @@
         }
 
         
-        $(document).ready(e=>{
-            consultarAlumnos();
-
-            $("#txtBuscarAlumnos").keyup(function(e){
-                let valor = $(this).val(),
-                    $tblalumnos = $("#tblBuscarAlumnos > tbody > tr");
-                
-                
-                console.log(valor, $tblalumnos);
-            });
-
-            $("#frmAlumnos")
-                .on('reset', e=>{
-                    limpiarDatosAlumno();
-                })
-                .submit(e=>{
-                e.preventDefault();
-
-                let accion = $("#frmAlumnos").data("accion"),
-                    idAlumno = $("#frmAlumnos").data("idalumno"),
-                    codigo = $("#txtCodigoAlumno").val(),
-                    nombre = $("#txtNombreAlumno").val(),
-                    telefono = $("#txtTelefonoAlumno").val(),
-                    datos = {accion, idAlumno, codigo, nombre, telefono};
-                $.post("http://localhost:3000/insertar",JSON.stringify(datos), (respuesta, status)=>{
-                    $("#msgAlumnos").removeClass("d-none").text(respuesta.resp);
-
-                    if( respuesta.resp.indexOf("exito") >=0 ){
-                        limpiarDatosAlumno();
-                        consultarAlumnos();
-
-                        $("#msgAlumnos")
-                            .removeClass("alert-danger")
-                            .addClass("alert-success");
-                    } else {
-                        $("#msgAlumnos")
-                            .removeClass("alert-success")
-                            .addClass("alert-danger");
-                    }
-                    setTimeout(()=>{
-                        $("#msgAlumnos").addClass("d-none");
-                    },5000);
-                }, "json");
-            });
-        });
     </script>
 </body>
 </html>
