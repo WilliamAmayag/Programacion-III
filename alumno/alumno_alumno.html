@@ -1,0 +1,86 @@
+<div class="card text-white bg-dark mb-3" id="cardAlumno">
+    <div class="card-header">
+        REGISTRO DE ALUMNOS
+        
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" data-bs-target="#cardAlumno" aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+        <form id="frmAlumnos" data-accion="nuevo" data-idalumno="0" class="row g-2">
+            <div class="col-auto">
+                <label for="txtCodigoAlumno" class="visually-hidden">Codigo</label>
+                <input pattern="^([SM|US]){2}([IS|LI|LA]){2}[0-9]{6}" required placeholder="Codigo" type="text" class="form-control" id="txtCodigoAlumno">
+            </div>
+            <div class="col-auto">
+                <label for="txtNombreAlumno" class="visually-hidden">Nombre</label>
+                <input pattern="[A-zÑñáéíóú ]{6,75}" type="text" class="form-control" id="txtNombreAlumno" placeholder="Nombre">
+            </div>
+            <div class="col-auto">
+                <label for="txtTelefonoAlumno" class="visually-hidden">Telefono</label>
+                <input pattern="[0-9]{4}[-| ][0-9]{4}" required type="text" class="form-control" id="txtTelefonoAlumno" placeholder="Telefono">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-secondary mb-3">Guardar</button>
+                <button type="reset" class="btn btn-warning mb-3">Nuevo</button>
+                <button type="button" class="btn btn-success mb-3" id="btnBuscarAlumno">Buscar</button>
+            </div>
+        </form>
+        <div class="row g-2">
+            <div id="msgAlumnos" class="alert alert-success d-none" role="alert"></div>
+        </div>
+    </div>
+  </div>
+  <script>
+    function mostrarAlumno(alumno){
+        $("#frmAlumnos")
+            .data("accion","modificar")
+            .data("idalumno",alumno.idAlumno);
+        $("#txtCodigoAlumno").val(alumno.codigo);
+        $("#txtNombreAlumno").val(alumno.nombre);
+        $("#txtTelefonoAlumno").val(alumno.telefono);
+    }
+    function limpiarDatosAlumno(){
+        $("#frmAlumnos")
+            .data("accion","nuevo")
+            .data("idalumno",0);
+        $("#frmAlumnos input[type=text]").val("");
+    }
+    $(document).ready(e=>{
+        $("#btnBuscarAlumno").click(function(ev){
+            ev.preventDefault();
+            abrir_ventana("alumno", "buscar");
+        });
+        $("#frmAlumnos")
+            .on('reset', e=>{
+                limpiarDatosAlumno();
+            })
+            .submit(e=>{
+            e.preventDefault();
+
+            let accion = $("#frmAlumnos").data("accion"),
+                idAlumno = $("#frmAlumnos").data("idalumno"),
+                codigo = $("#txtCodigoAlumno").val(),
+                nombre = $("#txtNombreAlumno").val(),
+                telefono = $("#txtTelefonoAlumno").val(),
+                datos = {accion, idAlumno, codigo, nombre, telefono};
+            $.post("http://localhost:3000/alumno",JSON.stringify(datos), (respuesta, status)=>{
+                $("#msgAlumnos").removeClass("d-none").text(respuesta.resp);
+
+                if( respuesta.resp.indexOf("exito") >=0 ){
+                    limpiarDatosAlumno();
+                    consultarAlumnos();
+
+                    $("#msgAlumnos")
+                        .removeClass("alert-danger")
+                        .addClass("alert-success");
+                } else {
+                    $("#msgAlumnos")
+                        .removeClass("alert-success")
+                        .addClass("alert-danger");
+                }
+                setTimeout(()=>{
+                    $("#msgAlumnos").addClass("d-none");
+                },5000);
+            }, "json");
+        });
+    });
+</script>

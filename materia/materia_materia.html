@@ -1,0 +1,112 @@
+<div class="card text-white bg-dark mb-3" id="cardMateria">
+    <div class="card-header">
+        REGISTRO DE MATERIAS
+        
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" data-bs-target="#cardMateria" aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+        <form id="frmMaterias" data-accion="nuevo" data-idmateria="0" class="row g-2">
+            <div class="col-auto">
+                <label for="txtCodigoMateria" class="visually-hidden">Codigo</label>
+                <input pattern="[0-9]{1,5}" required placeholder="Codigo" type="text" class="form-control" id="txtCodigoMateria">
+            </div>
+            <div class="col-auto">
+                <label for="txtNombreMateria" class="visually-hidden">Nombre</label>
+                <input pattern="[A-zÑñáéíóú ]{6,75}" type="text" class="form-control" id="txtNombreMateria" placeholder="Nombre">
+            </div>
+            <div class="col-auto">
+                <label for="txtUvMateria" class="visually-hidden">UV</label>
+                <input pattern="[0-9]{1,2}" required type="text" class="form-control" id="txtUvMateria" placeholder="UV">
+            </div>
+            <div class="col-auto">
+                <label for="cboPrerequisitoMateria" class="visually-hidden">Prerequisito</label>
+                <select title="Prerequisito" name="cboPrerequisitoMateria" id="cboPrerequisitoMateria" class="form-control"></select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-secondary mb-3">Guardar</button>
+                <button type="reset" class="btn btn-warning mb-3">Nuevo</button>
+                <button type="button" class="btn btn-success mb-3" id="btnBuscarMateria">Buscar</button>
+            </div>
+        </form>
+        <div class="row g-2">
+            <div id="msgMaterias" class="alert alert-success d-none" role="alert"></div>
+        </div>
+    </div>
+  </div>
+  <script>
+    function cargarPrerequisito(){
+        $.get("http://localhost:3000/consultar-prerequisito",(respuesta, status)=>{
+            $("#cboPrerequisitoMateria option").remove();
+            let $materia = $("#cboPrerequisitoMateria"),
+                filas = '';
+            if(respuesta.resp.length>0){
+                respuesta.resp.forEach(materia => {
+                    filas += `
+                        <option value="${materia.idMateria}">${materia.nombre}</option>
+                    `;
+                });
+            }else{
+                filas = `<option value="">No hay Datos que mostrar</option>`;
+            }
+            $materia.append(filas);
+        }, "json");
+    }
+    function mostrarMateria(materia){
+        $("#frmMaterias")
+            .data("accion","modificar")
+            .data("idmateria",materia.idMateria);
+        $("#txtCodigoMateria").val(materia.codigo);
+        $("#txtNombreMateria").val(materia.nombre);
+        $("#txtUvMateria").val(materia.uv);
+        $("#cboPrerequisitoMateria").val(materia.idPrerequisito);
+    }
+    function limpiarDatosMateria(){
+        $("#frmMaterias")
+            .data("accion","nuevo")
+            .data("idmateria",0);
+        $("#frmMaterias input[type=text]").val("");
+    }
+    $(document).ready(e=>{
+        cargarPrerequisito();
+
+        $("#btnBuscarMateria").click(function(ev){
+            ev.preventDefault();
+            abrir_ventana("materia", "buscar");
+        });
+        $("#frmMaterias")
+            .on('reset', e=>{
+                limpiarDatosMateria();
+            })
+            .submit(e=>{
+            e.preventDefault();
+
+            let accion = $("#frmMaterias").data("accion"),
+                idMateria = $("#frmMaterias").data("idmateria"),
+                codigo = $("#txtCodigoMateria").val(),
+                nombre = $("#txtNombreMateria").val(),
+                uv = $("#txtUvMateria").val(),
+                idPrerequisito = $("#cboPrerequisitoMateria").val(),
+                datos = {accion, idMateria, codigo, nombre, uv, idPrerequisito};
+            $.post("http://localhost:3000/materia",JSON.stringify(datos), (respuesta, status)=>{
+                $("#msgMaterias").removeClass("d-none").text(respuesta.resp);
+
+                if( respuesta.resp.indexOf("exito") >=0 ){
+                    limpiarDatosMateria();
+                    consultarMaterias();
+                    cargarPrerequisito();
+
+                    $("#msgMaterias")
+                        .removeClass("alert-danger")
+                        .addClass("alert-success");
+                } else {
+                    $("#msgMaterias")
+                        .removeClass("alert-success")
+                        .addClass("alert-danger");
+                }
+                setTimeout(()=>{
+                    $("#msgMaterias").addClass("d-none");
+                },5000);
+            }, "json");
+        });
+    });
+</script>

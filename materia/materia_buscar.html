@@ -1,0 +1,89 @@
+<div class="card text-white bg-dark mb-3" id="cardBuscarMateria">
+    <div class="card-header">
+        Consulta de Materias
+    
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" data-bs-target="#cardBuscarMateria" aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+        <table id="tblBuscarMaterias" class="table table-dark table-hover table-sm">
+            <thead>
+                <tr>
+                    <th colspan="5">
+                        <input class="form-control" placeholder="Buscar materias" type="text" 
+                            name="txtBuscarMaterias" id="txtBuscarMaterias">
+                    </th>
+                </tr>
+                <tr>
+                    <th>CODIGO</th>
+                    <th>NOMBRE</th>
+                    <th>UV</th>
+                    <th>PREREQUISITO</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    function eliminarMateria(materia){
+        if( confirm(`Esta seguro de eliminar el materia ${materia.nombre}?`) ){
+            let accion = "eliminar",
+                idMateria = materia.idMateria,
+                datos = {accion,idMateria};
+            $.post("http://localhost:3000/materia",JSON.stringify(datos),(resp, status)=>{
+                $("#msgMaterias").removeClass("d-none").text(resp.resp);
+
+                $("#msgMaterias")
+                    .removeClass("alert-danger")
+                    .addClass("alert-success");
+
+                setTimeout(()=>{
+                    $("#msgMaterias").addClass("d-none");
+                },5000);
+                limpiarDatosMateria();
+                consultarMaterias();
+            }, "json");
+        }
+    }
+    function consultarMaterias(){
+        $.get("http://localhost:3000/consultar-materias",(respuesta, status)=>{
+            $("#tblBuscarMaterias > tbody > tr").remove();
+            let $tblBuscarMaterias = $("#tblBuscarMaterias > tbody"),
+                filas = '';
+            if(respuesta.resp.length>0){
+                respuesta.resp.forEach(materia => {
+                    filas += `
+                        <tr onclick='mostrarMateria(${ JSON.stringify(materia) })'>
+                            <td>${materia.codigo}</td>
+                            <td>${materia.nombre}</td>
+                            <td>${materia.uv}</td>
+                            <td>${materia.prerequisito}</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" 
+                                    onclick='eliminarMateria(${ JSON.stringify(materia) })'>Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }else{
+                filas = `<tr>
+                            <td colspan="5">No hay materias registrados</td>
+                        </tr>`;
+            }
+            $tblBuscarMaterias.append(filas);
+        }, "json");
+    }
+    $(document).ready(e=>{
+        consultarMaterias();
+        $("#txtBuscarMaterias").keyup(function(e){
+            let valor = $(this).val(),
+                $tblmaterias = $("#tblBuscarMaterias > tbody > tr");
+                $tblmaterias.show();
+            let $filas = $tblmaterias.filter(function(index){
+                return $(this).find("td:not(:last)").text().toLowerCase().indexOf(valor.toLowerCase())==-1;
+            });
+            $filas.hide();
+        });
+    });
+</script>

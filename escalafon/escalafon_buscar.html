@@ -1,0 +1,87 @@
+<div class="card text-white bg-dark mb-3" id="cardBuscarEscalafon">
+    <div class="card-header">
+        Consulta de Escalafon
+    
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" data-bs-target="#cardBuscarEscalafon" aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+        <table id="tblBuscarEscalafons" class="table table-dark table-hover table-sm">
+            <thead>
+                <tr>
+                    <th colspan="4">
+                        <input class="form-control" placeholder="Buscar escalafons" type="text" 
+                            name="txtBuscarEscalafons" id="txtBuscarEscalafons">
+                    </th>
+                </tr>
+                <tr>
+                    <th>CODIGO</th>
+                    <th>NOMBRE</th>
+                   
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    function eliminarEscalafon(escalafon){
+        if( confirm(`Esta seguro de eliminar el escalafon ${escalafon.escalafon}?`) ){
+            let accion = "eliminar",
+                idEscalafon = escalafon.idEscalafon,
+                datos = {accion,idEscalafon};
+            $.post("http://localhost:3000/escalafon",JSON.stringify(datos),(resp, status)=>{
+                $("#msgEscalafons").removeClass("d-none").text(resp.resp);
+
+                $("#msgEscalafons")
+                    .removeClass("alert-danger")
+                    .addClass("alert-success");
+
+                setTimeout(()=>{
+                    $("#msgEscalafons").addClass("d-none");
+                },5000);
+                limpiarDatosEscalafon();
+                consultarEscalafons();
+            }, "json");
+        }
+    }
+    function consultarEscalafons(){
+        $.get("http://localhost:3000/consultar-escalafon",(respuesta, status)=>{
+            $("#tblBuscarEscalafons > tbody > tr").remove();
+            let $tblBuscarEscalafons = $("#tblBuscarEscalafons > tbody"),
+                filas = '';
+            if(respuesta.resp.length>0){
+                respuesta.resp.forEach(escalafon => {
+                    filas += `
+                        <tr onclick='mostrarEscalafon(${ JSON.stringify(escalafon) })'>
+                            <td>${escalafon.idEscalafon }</td>
+                            <td>${escalafon.escalafon}</td>
+                           
+                            <td>
+                                <button class="btn btn-danger btn-sm" 
+                                    onclick='eliminarEscalafon(${ JSON.stringify(escalafon) })'>Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }else{
+                filas = `<tr>
+                            <td colspan="4">No hay escalafons registrados</td>
+                        </tr>`;
+            }
+            $tblBuscarEscalafons.append(filas);
+        }, "json");
+    }
+    $(document).ready(e=>{
+        consultarEscalafons();
+        $("#txtBuscarEscalafons").keyup(function(e){
+            let valor = $(this).val(),
+                $tblescalafons = $("#tblBuscarEscalafons > tbody > tr");
+                $tblescalafons.show();
+            let $filas = $tblescalafons.filter(function(index){
+                return $(this).find("td:not(:last)").text().toLowerCase().indexOf(valor.toLowerCase())==-1;
+            });
+            $filas.hide();
+        });
+    });
+</script>
